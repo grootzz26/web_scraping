@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+<!--    {% load crispy_forms_tags %}-->
+    <title>Home-amzn</title>
+</head>
+<body>
+    <h1>Welcome Kudos!</h1>
+    <form method="POST" class="mt-5">
+        <div class="form-control">
+        {% csrf_token %}
+        {{ form }}
+        </div>
+        <br>
+    <button class="btn btn-primary" type="submit">Bulk Download</button>
+    </form>
+</body>
+</html>
