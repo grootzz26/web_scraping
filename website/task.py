@@ -1,5 +1,6 @@
 import requests
 from bs4 import *
+from selenium import webdriver
 
 
 def bulk_url_format(data, url):
@@ -10,8 +11,6 @@ def bulk_url_format(data, url):
         url_list.append(u)
         # path = data['path']+asin+'/'
         # path_list.append(path)
-
-    breakpoint()
 
     return url_list, path_list
 
@@ -41,7 +40,7 @@ def download_images(images, asin, path):
                     r = str(r, 'utf-8')
                 except UnicodeDecodeError:
 
-                    with open(f"{path}/{asin}/images{i+1}.jpg") as f:
+                    with open(f"{path}/{asin}/images{i+1}.jpg", "wb+") as f:
                         f.write(r)
 
                     count += 1
@@ -60,9 +59,17 @@ def download_images(images, asin, path):
 
 
 def send_to_beautiful_soup(url, asin, path):
-    r = requests.get(url)
-    soup = BeautifulSoup(r.text, 'html.parser')
+
+    driver = webdriver.Firefox()
+    driver.get(url)
+    soup = BeautifulSoup(driver.page_source)
     images = soup.findAll('img')
+    filter_list = []
+    for img in images:
+        if img.get('class') and img.get('class') == ["swatch-image", "inline-twister-manual-load"]:
+            if img.get('src'):
+                filter_list.append(img)
+    driver.quit()
     return download_images(images, asin, path)
 
 
