@@ -1,6 +1,7 @@
 import requests
 from bs4 import *
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 
 
 def bulk_url_format(data, url):
@@ -9,8 +10,6 @@ def bulk_url_format(data, url):
     for asin in asin_list:
         u = url.format(asin)
         url_list.append(u)
-        # path = data['path']+asin+'/'
-        # path_list.append(path)
 
     return url_list, path_list
 
@@ -59,25 +58,27 @@ def download_images(images, asin, path):
 
 
 def send_to_beautiful_soup(url, asin, path):
-
-    driver = webdriver.Firefox()
+    # options = webdriver.FirefoxOptions()
+    # firefox_options = options.add_argument('--headless')
+    options = Options()
+    options.headless = True
+    driver = webdriver.Firefox(options=options)
     driver.get(url)
     soup = BeautifulSoup(driver.page_source)
+    driver.quit()
     images = soup.findAll('img')
     filter_list = []
     for img in images:
         if img.get('class') and img.get('class') == ["swatch-image", "inline-twister-manual-load"]:
             if img.get('src'):
                 filter_list.append(img)
-    driver.quit()
-    return download_images(images, asin, path)
+
+    return download_images(filter_list, asin, path)
 
 
 def bulk_download(request, url, data):
-    # asin_list, path_list = bulk_url_format(data, url)
-    # path = data['path']
     asin_list = data['asin'].split(",")
     for asin in asin_list:
         web_url = url.format(asin)
         show_result = send_to_beautiful_soup(web_url, asin, data['path'])
-        return show_result
+    return True
