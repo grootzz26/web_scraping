@@ -11,9 +11,7 @@ def temp_view(request):
         form = AsinForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            breakpoint()
-            if bulk_download(request, web_url, data):
-                return
+            result =  bulk_download(request, web_url, data)
     else:
         form = AsinForm()
     return render(request, "index.html", {'form':form})
