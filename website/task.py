@@ -39,8 +39,12 @@ def download_images(images, asin, path):
                     r = str(r, 'utf-8')
                 except UnicodeDecodeError:
 
-                    with open(f"{path}/{asin}/images{i+1}.jpg", "wb+") as f:
-                        f.write(r)
+                    if i == 0:
+                        with open(f"{path}/{asin}/main.jpg", "wb+") as f:
+                            f.write(r)
+                    else:
+                        with open(f"{path}/{asin}/images{i+1}.jpg", "wb+") as f:
+                            f.write(r)
 
                     count += 1
             except:
@@ -69,7 +73,10 @@ def send_to_beautiful_soup(url, asin, path):
     images = soup.findAll('img')
     filter_list = []
     for img in images:
-        if img.get('class') and img.get('class') == ["swatch-image", "inline-twister-manual-load"]:
+        if len(filter_list) == 0:
+            if not img.get('class') and not img.get('alt') and 'jpg' in img.get("src"):
+                filter_list.append(img)
+        if len(filter_list) >= 1 and img.get('class') and img.get('class') == ["swatch-image", "inline-twister-manual-load"]:
             if img.get('src'):
                 filter_list.append(img)
 
