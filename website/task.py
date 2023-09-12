@@ -11,22 +11,23 @@ web_url = "https://www.amazon.in/dp/{}"
 def main_image(images):
     dynamic_main = [_img.get('data-a-dynamic-image') for _img in images if _img.get('data-a-dynamic-image')]
     img_obj = json.loads(dynamic_main[0])
-    for k, v in img_obj.items():
-        if v == [679, 509]:
-            return k
-        elif v == [741, 556]:
-            return k
-        elif v == [879, 659]:
-            return k
-        elif v == [606, 455]:
-            return k
-        elif v == [550, 413]:
-            return k
-        elif v == [500, 375]:
-            return k
-        else:
-            return k
-
+    return max(zip(img_obj.values(), img_obj.keys()))[1]
+    # breakpoint()
+    # for k, v in img_obj.items():
+    #     if v == [679, 509]:
+    #         return k
+    #     elif v == [741, 556]:
+    #         return k
+    #     elif v == [879, 659]:
+    #         return k
+    #     elif v == [606, 455]:
+    #         return k
+    #     elif v == [550, 413]:
+    #         return k
+    #     elif v == [500, 375]:
+    #         return k
+    #     else:
+    #         return k
 
 
 def bulk_url_format(data, url):
@@ -112,7 +113,8 @@ def send_to_beautiful_soup(url, asin, path):
     for _a in var_asins:
         url = web_url.format(_a)
         soup = make_request(url)
-        filter_list.append(main_image(soup.findAll('img')))
+        img_ = main_image(soup.findAll('img'))
+        filter_list.append(img_)
     return download_images(filter_list, asin, path)
 
 
