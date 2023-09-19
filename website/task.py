@@ -4,6 +4,8 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 import json
+import threading
+import time
 
 web_url = "https://www.amazon.in/dp/{}"
 
@@ -92,35 +94,61 @@ def download_images(images, asin, path):
         return False
 
 
-def make_request(url):
+def make_request(url, asin=None, path=None, filter_list=None):
     options = Options()
     options.headless = True
     driver = webdriver.Firefox(options=options)
     driver.get(url)
     soup = BeautifulSoup(driver.page_source, 'lxml')
     driver.quit()
-    return soup
+    if not asin and not path:
+        return soup
+    filter_list.append(main_image(soup.findAll('img')))
+    return filter_list
 
 
 def send_to_beautiful_soup(url, asin, path):
     soup = make_request(url)
     images, variants = soup.findAll('img'), soup.findAll('li')
-    filter_list = []
-    var_asins = [asin.get('data-asin') for asin in variants if asin.get('data-asin')]
+    filter_list, var_asins = [], []
+    filter_list.append(main_image(soup.findAll('img')))
+    # var_asins = [asin.get('data-asin') for asin in variants if asin.get('data-asin')]
+    for _asin in variants:
+        # if _asin.get('data-csa-c-action') == "image-block-alt-image-hover" or _asin.get("data-csa-c-type") =="uxElement":
+        if _asin.get('data-asin'):
+            var_asins.append(_asin.get('data-asin'))
+        elif _asin.get('data-csa-c-item-id'):
+            var_asins.append(_asin.get('data-csa-c-item-id'))
+        elif _asin.get('data-defaultasin'):
+            var_asins.append(_asin.get('data-defaultasin'))
     # ["dimension-value-list-item-square-image",
     #  "inline-twister-swatch", "reduced-image-swatch-margin",
     #  "a-declarative", "desktop-configurator-dim-row-0"]
+    tasks = []
     for _a in var_asins:
         url = web_url.format(_a)
-        soup = make_request(url)
-        img_ = main_image(soup.findAll('img'))
-        filter_list.append(img_)
+        tasks.append(threading.Thread(target=make_request, args=(url, _a, path, filter_list)))
+        tasks[-1].start()
+        time.sleep(2)
+    for t in tasks:
+        t.join()
+    # return filter_list
     return download_images(filter_list, asin, path)
 
 
 def bulk_download(request, url, data):
+    # asin_list = data['asin'].split(",")
+    # for asin in asin_list:
+    #     web_url = url.format(asin)
+    #     send_to_beautiful_soup(web_url, asin, data['path'])
+    # return True
     asin_list = data['asin'].split(",")
+    tasks = []
     for asin in asin_list:
         web_url = url.format(asin)
-        send_to_beautiful_soup(web_url, asin, data['path'])
+        tasks.append(threading.Thread(target=send_to_beautiful_soup, args=(web_url, asin, data['path'])))
+        tasks[-1].start()
+        time.sleep(2)
+    for t in tasks:
+        t.join()
     return True
