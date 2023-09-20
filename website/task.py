@@ -2,6 +2,7 @@ import requests
 from bs4 import *
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 import json
 import threading
@@ -45,25 +46,26 @@ def bulk_url_format(data, url):
 def download_images(images, asin, path):
     count = 0
     print(f"Total {len(images)} images found in asin {asin}")
-    img_link = ""
+    # img_link = ""
     if len(images)!=0:
         for i, image in enumerate(images):
-            try:
-                img_link = image['data-srcset']
-            except:
-                try:
-                    img_link = image['data-src']
-                except:
-                    try:
-                        img_link = image['data-fallback-src']
-                    except:
-                        try:
-                            img_link = image['src']
-                        except:
-                            try:
-                                img_link = image
-                            except:
-                                pass
+            img_link = image
+            # try:
+            #     img_link = image['data-srcset']
+            # except:
+            #     try:
+            #         img_link = image['data-src']
+            #     except:
+            #         try:
+            #             img_link = image['data-fallback-src']
+            #         except:
+            #             try:
+            #                 img_link = image['src']
+            #             except:
+            #                 try:
+            #                     img_link = image
+            #                 except:
+            #                     pass
 
             try:
                 if img_link:
@@ -99,6 +101,7 @@ def make_request(url, asin=None, path=None, filter_list=None):
     options.headless = True
     driver = webdriver.Firefox(options=options)
     driver.get(url)
+    WebDriverWait(driver, 1)
     soup = BeautifulSoup(driver.page_source, 'lxml')
     driver.quit()
     if not asin and not path:
@@ -132,6 +135,7 @@ def send_to_beautiful_soup(url, asin, path):
         time.sleep(2)
     for t in tasks:
         t.join()
+        time.sleep(1)
     # return filter_list
     return download_images(filter_list, asin, path)
 
@@ -148,7 +152,8 @@ def bulk_download(request, url, data):
         web_url = url.format(asin)
         tasks.append(threading.Thread(target=send_to_beautiful_soup, args=(web_url, asin, data['path'])))
         tasks[-1].start()
-        time.sleep(2)
+        time.sleep(5)
     for t in tasks:
         t.join()
+        time.sleep(1)
     return True
